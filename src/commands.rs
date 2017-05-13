@@ -46,7 +46,7 @@ fn do_moo(previous_state: CowVM) -> CowVM {
     let mut ofset = 2;
     for var in slice{
         ofset += 1;
-        if var == Command::MOO{
+        if var == Command::MOO{ //NOT WORKING
             break;
         }
     }
