@@ -5,7 +5,7 @@ use std::env;
 use std::path::Path;
 use std::ops::Index;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Command {
     moo,
     mOo,
@@ -22,7 +22,7 @@ pub enum Command {
 
 impl Command
 {
-    fn run(&self, state: CowVM) -> CowVM{
+    pub fn run(&self, state: CowVM) -> CowVM{
         match self {
             moo => do_moo(state),
             mOo => do_mOo(state),
@@ -41,22 +41,22 @@ impl Command
 }
 
 fn do_moo(previous_state: CowVM) -> CowVM {
-    //let mut slice : Vec<Command> = previous_state.program.iter().take(previous_state.program_position - 2).collect();
-    let mut slice = &previous_state.program[0..previous_state.program_position - 2];
-    let mut ofset = 2;
-    for var in slice{
-        ofset += 1;
-        if var == Command::MOO{ //NOT WORKING
+    let mut new_position = previous_state.program_position - 2;
+    for i in (0..previous_state.program_position - 1).rev(){
+        if previous_state.program[i] == Command::MOO{
+            new_position = i;
             break;
         }
     }
-    CowVM{ program_position: previous_state.program_position - ofset, ..previous_state}
+    CowVM{ program_position: new_position, ..previous_state}
 }
 
+#[allow(non_snake_case)]
 fn do_mOo(previous_state: CowVM) ->CowVM {
     CowVM{memory_position: previous_state.memory_position-1, ..previous_state}
 }
 
+#[allow(non_snake_case)]
 fn do_moO(previous_state: CowVM) -> CowVM {
     let mut memory = previous_state.memory;
     if memory.len() == (previous_state.memory_position - 1){
@@ -69,6 +69,7 @@ fn do_moO(previous_state: CowVM) -> CowVM {
     }
 }
 
+#[allow(non_snake_case)]
 fn do_mOO(previous_state: CowVM) -> CowVM {
     match previous_state.memory[previous_state.memory_position] {
         0 => Command::moo.run(previous_state),
@@ -85,6 +86,7 @@ fn do_mOO(previous_state: CowVM) -> CowVM {
     }
 }
 
+#[allow(non_snake_case)]
 fn do_Moo(previous_state: CowVM) -> CowVM {
     let mut memory = previous_state.memory;
     if memory[previous_state.memory_position] == 0 {
@@ -99,6 +101,7 @@ fn do_Moo(previous_state: CowVM) -> CowVM {
     }
 }
 
+#[allow(non_snake_case)]
 fn do_MOo(previous_state: CowVM) -> CowVM {
     let mut memory = previous_state.memory;
     memory[previous_state.memory_position] -= 1;
@@ -108,6 +111,7 @@ fn do_MOo(previous_state: CowVM) -> CowVM {
     }
 }
 
+#[allow(non_snake_case)]
 fn do_MoO(previous_state: CowVM) -> CowVM {
     let mut memory = previous_state.memory;
     memory[previous_state.memory_position] += 1;
@@ -117,6 +121,7 @@ fn do_MoO(previous_state: CowVM) -> CowVM {
     }
 }
 
+#[allow(non_snake_case)]
 fn do_MOO(previous_state: CowVM) -> CowVM {
     match previous_state.memory[previous_state.memory_position] {
         0 => {
@@ -135,6 +140,7 @@ fn do_MOO(previous_state: CowVM) -> CowVM {
     }
 }
 
+#[allow(non_snake_case)]
 fn do_OOO(previous_state: CowVM) -> CowVM {
     let mut memory = previous_state.memory;
     memory[previous_state.memory_position] = 0;
@@ -144,15 +150,16 @@ fn do_OOO(previous_state: CowVM) -> CowVM {
     }
 }
 
+#[allow(non_snake_case)]
 fn do_MMM(previous_state: CowVM) -> CowVM {
     let mut memory = previous_state.memory;
-    let register = match previous_state.register {
-        (false, _) => (true, memory[previous_state.memory_position]),
-        (true, value) => {
-            memory[previous_state.memory_position] = value;
-            (false, 0)
-        }
-    };
+    let mut register : Option<u32>;
+    if let Some(value) = previous_state.register{
+        memory[previous_state.memory_position] = value;
+        register = None;
+    } else {
+        register = Some(memory[previous_state.memory_position]);
+    }
     CowVM{
         register: register,
         memory: memory,
@@ -160,11 +167,13 @@ fn do_MMM(previous_state: CowVM) -> CowVM {
     }
 }
 
+#[allow(non_snake_case)]
 fn do_OOM(previous_state: CowVM) -> CowVM {
     print!("{}", previous_state.memory[previous_state.memory_position]);
     previous_state
 }
 
+#[allow(non_snake_case)]
 fn do_omm(previous_state: CowVM) -> CowVM {
     let mut s = String::new();
     stdin().read_line(&mut s).expect("failed to read from stdin");
