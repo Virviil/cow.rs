@@ -1,6 +1,7 @@
 [package]
 name = "cow"
 version = "0.1.0"
-authors = ["Dmitry Rubinstein <rubinsteindb@gmail.com>"]
+authors = ["Dmitry Rubinstein <rubinsteindb@gmail.com>",
+           "Kharitonovich Mikhail <kharitonovich.m@gmail.com>"]
 
 [dependencies]
