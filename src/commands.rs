@@ -1,4 +1,4 @@
-use VM::CowVM;
+use cow_vm::CowVM;
 use std::io::stdin;
 use std::io::Read;
 use std::env;
@@ -40,37 +40,53 @@ impl Command
     }
 }
 
-fn do_moo(previous_state: CowVM) -> CowVM {
-    let mut new_position = previous_state.program_position - 2;
-    for i in (0..previous_state.program_position - 1).rev(){
-        if previous_state.program[i] == Command::MOO{
-            new_position = i;
-            break;
+pub fn do_moo(state: CowVM) -> CowVM {
+    let mut level = 0;
+    let mut new_position = state.program_position - 2;
+    for i in (0..state.program_position).rev(){
+        if state.program[i] == 0 {
+            level += 1;
+        }
+        if state.program[i] == 7 {
+            if level == 0 {
+                new_position = i;
+                break;
+            }
+            else {
+                level -= 1;
+            }
         }
     }
-    CowVM{ program_position: new_position, ..previous_state}
+    CowVM{
+        program_position: new_position,
+        ..state}
 }
 
 #[allow(non_snake_case)]
-fn do_mOo(previous_state: CowVM) ->CowVM {
-    CowVM{memory_position: previous_state.memory_position-1, ..previous_state}
+pub fn do_mOo(state: CowVM) ->CowVM {
+    CowVM{
+        memory_position: state.memory_position-1,
+        program_position: state.program_position+1,
+        ..state
+    }
 }
 
 #[allow(non_snake_case)]
-fn do_moO(previous_state: CowVM) -> CowVM {
-    let mut memory = previous_state.memory;
-    if memory.len() == (previous_state.memory_position - 1){
+pub fn do_moO(state: CowVM) -> CowVM {
+    let mut memory = state.memory;
+    if memory.len() == (state.memory_position + 1){
         memory.push(0);
     }
     CowVM{
-        memory_position: previous_state.memory_position+1,
+        memory_position: state.memory_position+1,
         memory: memory,
-        ..previous_state
+        program_position: state.program_position+1,
+        ..state
     }
 }
 
 #[allow(non_snake_case)]
-fn do_mOO(previous_state: CowVM) -> CowVM {
+pub fn do_mOO(previous_state: CowVM) -> CowVM {
     match previous_state.memory[previous_state.memory_position] {
         0 => Command::moo.run(previous_state),
         1 => Command::mOo.run(previous_state),
@@ -87,106 +103,118 @@ fn do_mOO(previous_state: CowVM) -> CowVM {
 }
 
 #[allow(non_snake_case)]
-fn do_Moo(previous_state: CowVM) -> CowVM {
-    let mut memory = previous_state.memory;
-    if memory[previous_state.memory_position] == 0 {
-        memory[previous_state.memory_position] = getchar() as u32;
+pub fn do_Moo(state: CowVM) -> CowVM {
+    let mut memory = state.memory;
+    if memory[state.memory_position] == 0 {
+        memory[state.memory_position] = getchar() as i32;
     }
     else {
-        print!("{}", memory[previous_state.memory_position] as u8 as char);
+        print!("{}", memory[state.memory_position] as u8 as char);
     }
     CowVM{
         memory: memory,
-        ..previous_state
+        program_position: state.program_position+1,
+        ..state
     }
 }
 
 #[allow(non_snake_case)]
-fn do_MOo(previous_state: CowVM) -> CowVM {
-    let mut memory = previous_state.memory;
-    memory[previous_state.memory_position] -= 1;
+pub fn do_MOo(state: CowVM) -> CowVM {
+    let mut memory = state.memory;
+    memory[state.memory_position] -= 1;
     CowVM{
         memory: memory,
-        ..previous_state
+        program_position: state.program_position+1,
+        ..state
     }
 }
 
 #[allow(non_snake_case)]
-fn do_MoO(previous_state: CowVM) -> CowVM {
-    let mut memory = previous_state.memory;
-    memory[previous_state.memory_position] += 1;
+pub fn do_MoO(state: CowVM) -> CowVM {
+    let mut memory = state.memory;
+    memory[state.memory_position] += 1;
     CowVM{
         memory: memory,
-        ..previous_state
+        program_position: state.program_position+1,
+        ..state
     }
 }
 
 #[allow(non_snake_case)]
-fn do_MOO(previous_state: CowVM) -> CowVM {
-    match previous_state.memory[previous_state.memory_position] {
+pub fn do_MOO(state: CowVM) -> CowVM {
+    match state.memory[state.memory_position] {
         0 => {
-            let mut new_position = previous_state.program_position+1;
-            for command_position in previous_state.program_position+1..previous_state.program.len()-1{
-                match previous_state.program[command_position]{
-                    Command::moo => new_position = command_position,
+            let mut new_position = state.program_position+1;
+            for command_position in state.program_position+1..state.program.len()-1{
+                match state.program[command_position]{
+                    0 => new_position = command_position+1,
                     _ => continue
                 }
             }
-            CowVM{program_position: new_position, ..previous_state}
+            CowVM{
+                program_position: new_position,
+                ..state
+            }
         },
-        _ => {
-            previous_state
+        _ => CowVM{
+            program_position: state.program_position+1,
+            ..state
         }
     }
 }
 
 #[allow(non_snake_case)]
-fn do_OOO(previous_state: CowVM) -> CowVM {
-    let mut memory = previous_state.memory;
-    memory[previous_state.memory_position] = 0;
+pub fn do_OOO(state: CowVM) -> CowVM {
+    let mut memory = state.memory;
+    memory[state.memory_position] = 0;
     CowVM{
         memory: memory,
-        ..previous_state
+        program_position: state.program_position+1,
+        ..state
     }
 }
 
 #[allow(non_snake_case)]
-fn do_MMM(previous_state: CowVM) -> CowVM {
-    let mut memory = previous_state.memory;
-    let mut register : Option<u32>;
-    if let Some(value) = previous_state.register{
-        memory[previous_state.memory_position] = value;
+pub fn do_MMM(state: CowVM) -> CowVM {
+    let mut memory = state.memory;
+    let mut register : Option<i32>;
+    if let Some(value) = state.register{
+        memory[state.memory_position] = value;
         register = None;
     } else {
-        register = Some(memory[previous_state.memory_position]);
+        register = Some(memory[state.memory_position]);
     }
     CowVM{
         register: register,
+        program_position: state.program_position+1,
         memory: memory,
-        ..previous_state
+        ..state
     }
 }
 
 #[allow(non_snake_case)]
-fn do_OOM(previous_state: CowVM) -> CowVM {
-    print!("{}", previous_state.memory[previous_state.memory_position]);
-    previous_state
+pub fn do_OOM(state: CowVM) -> CowVM {
+    print!("{}\n", state.memory[state.memory_position]);
+    CowVM{
+        program_position: state.program_position+1,
+        ..state
+    }
 }
 
 #[allow(non_snake_case)]
-fn do_omm(previous_state: CowVM) -> CowVM {
+pub fn do_omm(previous_state: CowVM) -> CowVM {
     let mut s = String::new();
     stdin().read_line(&mut s).expect("failed to read from stdin");
 
-    let num = s.trim_right().parse::<u32>().expect("failed parsing int from stdin");
+    let num = s.trim_right().parse::<i32>().expect("failed parsing int from stdin");
 
     let mut new_memory = previous_state.memory;
     new_memory[previous_state.memory_position] = num;
     CowVM{memory: new_memory, ..previous_state}
-    
+
 }
 
-fn getchar() -> u8 {
+pub fn getchar() -> u8 {
     stdin()
     .bytes()
     .next()
@@ -195,7 +223,7 @@ fn getchar() -> u8 {
     .expect("Error reading character")
 }
 
-fn getnum() -> i32 {
+pub fn getnum() -> i32 {
     let mut n = String::new();
     stdin()
         .read_line(&mut n)
