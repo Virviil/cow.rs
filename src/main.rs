@@ -10,7 +10,7 @@ use cow_vm::CowVM;
 
 fn main() {
     let mut state = init_vm();
-    println!("Initial state:\n\t{:?}\r", state);
+    // println!("Initial state:\n\t{:?}\r", state);
     loop {
         if state.program_position == state.program.len() {
             break;
@@ -51,7 +51,7 @@ fn init_vm() -> CowVM {
 fn new_vm(program_string : String) -> CowVM{
     let mut buff : [char; 3] = [0 as char; 3];
 
-    let commands : Vec<u32> = 
+    let commands : Vec<u32> =
     program_string
     .chars()
     .map(|e| {
