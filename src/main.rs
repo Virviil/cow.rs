@@ -59,7 +59,7 @@ fn new_vm(program_string : String) -> CowVM{
         buff[1] = buff[2];
         buff[2] = e;
 
-        match (buff[0], buff[1], buff[2]){
+        let val = match (buff[0], buff[1], buff[2]){
             ('m', 'o', 'o') => 0,
             ('m', 'O', 'o') => 1,
             ('m', 'o', 'O') => 2,
@@ -70,10 +70,14 @@ fn new_vm(program_string : String) -> CowVM{
             ('M', 'O', 'O') => 7,
             ('O', 'O', 'O') => 8,
             ('M', 'M', 'M') => 9,
-            ('o', 'o', 'M') => 10,
-            ('O', 'O', 'M') => 11,
+            ('O', 'O', 'M') => 10,
+            ('o', 'o', 'm') => 11,
             (_, _, _) => 99 //invalid command
+        };
+        if val != 99 {
+            buff = [0 as char; 3];
         }
+        val
     })
     .filter(|e| *e != 99)
     .collect();
