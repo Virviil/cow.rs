@@ -45,29 +45,39 @@ fn init_vm() -> CowVM {
     let mut file = File::open(path).expect("Could not open the file");
     let mut content = String::new();
     file.read_to_string(&mut content).expect("Could not read the file");
-    let commands : Vec<&str> = content.trim().split(" ").collect();
-    new_vm(commands)
+    new_vm(content)
 }
 
-fn new_vm(command_strings : Vec<&str>) -> CowVM{
-    let mut commands : Vec<u32> = Vec::with_capacity(command_strings.len());
-    for command in command_strings{
-        match command {
-            "moo" => commands.push(0),
-            "mOo" => commands.push(1),
-            "moO" => commands.push(2),
-            "mOO" => commands.push(3),
-            "Moo" => commands.push(4),
-            "MOo" => commands.push(5),
-            "MoO" => commands.push(6),
-            "MOO" => commands.push(7),
-            "OOO" => commands.push(8),
-            "MMM" => commands.push(9),
-            "OOM" => commands.push(10),
-            "oom" => commands.push(11),
-            _ => panic!("Couldn't parse command")
+fn new_vm(program_string : String) -> CowVM{
+    let mut buff : [char; 3] = [0 as char; 3];
+
+    let commands : Vec<u32> = 
+    program_string
+    .chars()
+    .map(|e| {
+        buff[0] = buff[1];
+        buff[1] = buff[2];
+        buff[2] = e;
+
+        match (buff[0], buff[1], buff[2]){
+            ('m', 'o', 'o') => 0,
+            ('m', 'O', 'o') => 1,
+            ('m', 'o', 'O') => 2,
+            ('m', 'O', 'O') => 3,
+            ('M', 'o', 'o') => 4,
+            ('M', 'O', 'o') => 5,
+            ('M', 'o', 'O') => 6,
+            ('M', 'O', 'O') => 7,
+            ('O', 'O', 'O') => 8,
+            ('M', 'M', 'M') => 9,
+            ('o', 'o', 'M') => 10,
+            ('O', 'O', 'M') => 11,
+            (_, _, _) => 99 //invalid command
         }
-    }
+    })
+    .filter(|e| *e != 99)
+    .collect();
+
     CowVM{
         program: commands,
         memory: vec![0],
