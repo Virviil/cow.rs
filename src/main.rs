@@ -6,7 +6,7 @@ use std::path::Path;
 use std::fs::File;
 use std::io::Read;
 
-use cow_vm::CowVM;
+use cow_vm::{CowVM, CowCode};
 
 fn main() {
     let mut state = init_vm();
@@ -23,19 +23,18 @@ fn main() {
 fn execute(state: CowVM) -> CowVM {
     let command = state.program[state.program_position];
     match command {
-        0 => commands::do_moo(state),
-        1 => commands::do_mOo(state),
-        2 => commands::do_moO(state),
-        3 => commands::do_mOO(state),
-        4 => commands::do_Moo(state),
-        5 => commands::do_MOo(state),
-        6 => commands::do_MoO(state),
-        7 => commands::do_MOO(state),
-        8 => commands::do_OOO(state),
-        9 => commands::do_MMM(state),
-        10 => commands::do_OOM(state),
-        11 => commands::do_oom(state),
-        _ => state,
+        CowCode::moo => commands::do_moo(state),
+        CowCode::mOo => commands::do_mOo(state),
+        CowCode::moO => commands::do_moO(state),
+        CowCode::mOO => commands::do_mOO(state),
+        CowCode::Moo => commands::do_Moo(state),
+        CowCode::MOo => commands::do_MOo(state),
+        CowCode::MoO => commands::do_MoO(state),
+        CowCode::MOO => commands::do_MOO(state),
+        CowCode::OOO => commands::do_OOO(state),
+        CowCode::MMM => commands::do_MMM(state),
+        CowCode::OOM => commands::do_OOM(state),
+        CowCode::oom => commands::do_oom(state),
     }
 }
 
@@ -49,37 +48,36 @@ fn init_vm() -> CowVM {
 }
 
 fn new_vm(program_string : String) -> CowVM{
-    let mut buff : [char; 3] = [0 as char; 3];
+    let mut buff : [u8; 3] = [0; 3];
 
-    let commands : Vec<u32> =
+    let commands : Vec<CowCode> =
     program_string
-    .chars()
-    .map(|e| {
+    .into_bytes().into_iter()
+    .filter_map(|e| {
         buff[0] = buff[1];
         buff[1] = buff[2];
         buff[2] = e;
 
         let val = match (buff[0], buff[1], buff[2]){
-            ('m', 'o', 'o') => 0,
-            ('m', 'O', 'o') => 1,
-            ('m', 'o', 'O') => 2,
-            ('m', 'O', 'O') => 3,
-            ('M', 'o', 'o') => 4,
-            ('M', 'O', 'o') => 5,
-            ('M', 'o', 'O') => 6,
-            ('M', 'O', 'O') => 7,
-            ('O', 'O', 'O') => 8,
-            ('M', 'M', 'M') => 9,
-            ('O', 'O', 'M') => 10,
-            ('o', 'o', 'm') => 11,
-            (_, _, _) => 99 //invalid command
+            (b'm', b'o', b'o') => Some(CowCode::moo),
+            (b'm', b'O', b'o') => Some(CowCode::mOo),
+            (b'm', b'o', b'O') => Some(CowCode::moO),
+            (b'm', b'O', b'O') => Some(CowCode::mOO),
+            (b'M', b'o', b'o') => Some(CowCode::Moo),
+            (b'M', b'O', b'o') => Some(CowCode::MOo),
+            (b'M', b'o', b'O') => Some(CowCode::MoO),
+            (b'M', b'O', b'O') => Some(CowCode::MOO),
+            (b'O', b'O', b'O') => Some(CowCode::OOO),
+            (b'M', b'M', b'M') => Some(CowCode::MMM),
+            (b'O', b'O', b'M') => Some(CowCode::OOM),
+            (b'o', b'o', b'm') => Some(CowCode::oom),
+            _ => None, //invalid command
         };
-        if val != 99 {
-            buff = [0 as char; 3];
+        if val.is_some() {
+            buff = [0; 3];
         }
         val
     })
-    .filter(|e| *e != 99)
     .collect();
 
     CowVM{

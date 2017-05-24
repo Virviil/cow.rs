@@ -1,4 +1,4 @@
-use cow_vm::CowVM;
+use cow_vm::{CowVM, CowCode};
 use std::io::stdin;
 use std::io::Read;
 
@@ -6,17 +6,17 @@ pub fn do_moo(state: CowVM) -> CowVM {
     let mut level = 0;
     let mut new_position = state.program_position - 2;
     for i in (0..state.program_position).rev(){
-        if state.program[i] == 0 {
-            level += 1;
-        }
-        if state.program[i] == 7 {
-            if level == 0 {
-                new_position = i;
-                break;
-            }
-            else {
-                level -= 1;
-            }
+        match state.program[i] {
+            CowCode::moo => level += 1,
+            CowCode::MOO =>
+                if level == 0 {
+                    new_position = i;
+                    break;
+                }
+                else {
+                    level -= 1;
+                },
+            _ => (),
         }
     }
     CowVM{
@@ -109,8 +109,8 @@ pub fn do_MOO(state: CowVM) -> CowVM {
         0 => {
             let mut new_position = state.program_position+1;
             for command_position in state.program_position+1..state.program.len()-1{
-                match state.program[command_position]{
-                    0 => new_position = command_position+1,
+                match state.program[command_position] {
+                    CowCode::moo => new_position = command_position+1,
                     _ => continue
                 }
             }
