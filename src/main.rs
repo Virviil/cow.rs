@@ -1,12 +1,12 @@
-mod cow_vm;
 mod commands;
+mod cow_vm;
 
 use std::env;
-use std::path::Path;
 use std::fs::File;
 use std::io::Read;
+use std::path::Path;
 
-use cow_vm::{CowVM, CowCode};
+use crate::cow_vm::{CowCode, CowVm};
 
 fn main() {
     let mut state = init_vm();
@@ -16,11 +16,11 @@ fn main() {
             break;
         }
         state = execute(state);
-        // println!("New state:\n\t{:?}\r", state);
+        // println!("New state:{:?}\r", state);
     }
 }
 
-fn execute(state: CowVM) -> CowVM {
+fn execute(state: CowVm) -> CowVm {
     let command = state.program[state.program_position];
     match command {
         CowCode::moo => commands::do_moo(state),
@@ -38,53 +38,54 @@ fn execute(state: CowVM) -> CowVM {
     }
 }
 
-fn init_vm() -> CowVM {
-    let filepath = env::args().skip(1).next().expect("No file path specified");
+fn init_vm() -> CowVm {
+    let filepath = env::args().nth(1).expect("No file path specified");
     let path = Path::new(filepath.as_str());
     let mut file = File::open(path).expect("Could not open the file");
     let mut content = String::new();
-    file.read_to_string(&mut content).expect("Could not read the file");
+    file.read_to_string(&mut content)
+        .expect("Could not read the file");
     new_vm(content)
 }
 
-fn new_vm(program_string : String) -> CowVM{
-    let mut buff : [u8; 3] = [0; 3];
+fn new_vm(program_string: String) -> CowVm {
+    let mut buff: [u8; 3] = [0; 3];
 
-    let commands : Vec<CowCode> =
-    program_string
-    .into_bytes().into_iter()
-    .filter_map(|e| {
-        buff[0] = buff[1];
-        buff[1] = buff[2];
-        buff[2] = e;
+    let commands: Vec<CowCode> = program_string
+        .into_bytes()
+        .into_iter()
+        .filter_map(|e| {
+            buff[0] = buff[1];
+            buff[1] = buff[2];
+            buff[2] = e;
 
-        let val = match (buff[0], buff[1], buff[2]){
-            (b'm', b'o', b'o') => Some(CowCode::moo),
-            (b'm', b'O', b'o') => Some(CowCode::mOo),
-            (b'm', b'o', b'O') => Some(CowCode::moO),
-            (b'm', b'O', b'O') => Some(CowCode::mOO),
-            (b'M', b'o', b'o') => Some(CowCode::Moo),
-            (b'M', b'O', b'o') => Some(CowCode::MOo),
-            (b'M', b'o', b'O') => Some(CowCode::MoO),
-            (b'M', b'O', b'O') => Some(CowCode::MOO),
-            (b'O', b'O', b'O') => Some(CowCode::OOO),
-            (b'M', b'M', b'M') => Some(CowCode::MMM),
-            (b'O', b'O', b'M') => Some(CowCode::OOM),
-            (b'o', b'o', b'm') => Some(CowCode::oom),
-            _ => None, //invalid command
-        };
-        if val.is_some() {
-            buff = [0; 3];
-        }
-        val
-    })
-    .collect();
+            let val = match (buff[0], buff[1], buff[2]) {
+                (b'm', b'o', b'o') => Some(CowCode::moo),
+                (b'm', b'O', b'o') => Some(CowCode::mOo),
+                (b'm', b'o', b'O') => Some(CowCode::moO),
+                (b'm', b'O', b'O') => Some(CowCode::mOO),
+                (b'M', b'o', b'o') => Some(CowCode::Moo),
+                (b'M', b'O', b'o') => Some(CowCode::MOo),
+                (b'M', b'o', b'O') => Some(CowCode::MoO),
+                (b'M', b'O', b'O') => Some(CowCode::MOO),
+                (b'O', b'O', b'O') => Some(CowCode::OOO),
+                (b'M', b'M', b'M') => Some(CowCode::MMM),
+                (b'O', b'O', b'M') => Some(CowCode::OOM),
+                (b'o', b'o', b'm') => Some(CowCode::oom),
+                _ => None, //invalid command
+            };
+            if val.is_some() {
+                buff = [0; 3];
+            }
+            val
+        })
+        .collect();
 
-    CowVM{
+    CowVm {
         program: commands,
         memory: vec![0],
         program_position: 0,
         memory_position: 0,
-        register: None
+        register: None,
     }
 }
